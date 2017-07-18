@@ -1,7 +1,7 @@
 # Copyright (c) 2012-2018 Nicolás Reynolds <fauno@endefensadelsl.org>
 #               2012-2013 Mauricio Pasquier Juan <mpj@endefensadelsl.org>
 #               2013      Brian Candler <b.candler@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
@@ -9,10 +9,10 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -141,9 +141,12 @@ module Jekyll
     def content
       # add base url from config if we're creating a subdir site
       relative_re = /\(#{@site.config.dig('baseurl')}\/(.*)\)/
+      span_nodiacritics = /(<span class="no-diacritics" data-state="off">\w+<\/span>)/
       if single_post?
         # make all images relative to source dir
-        single_post.content.gsub(relative_re, '(\1)')
+        single_post.content.gsub(relative_re, '\1')
+        # hide span tags containing diacritic substitutes
+        single_post.content.gsub(span_nodiacritics, '')
       else
         header_re = /^(#+.*\n*|.*\n[=-]+\n*)\Z/
         bib_title = ""
@@ -155,6 +158,8 @@ module Jekyll
           content = post.content.gsub(header_re, '')
           # make all images relative to source dir
           content = content.gsub(relative_re, '(\1)')
+          # hide span tags containing diacritic substitutes
+          content = content.gsub(span_nodiacritics, '')
 
           # if the file contains all the articles, we make each category
           # a different part by adding a first level title out of it
