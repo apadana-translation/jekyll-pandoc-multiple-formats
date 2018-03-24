@@ -276,6 +276,11 @@ module Jekyll
         @flags << @config['full_flags']
       end
 
+      # use Book class rather than Article for category, full, & full_collection PDFs
+      if pdf? && !single_post?
+        @flags << '-V documentclass=book --table-of-contents'
+      end
+
       if site_lang?
         @flags << "-V lang=#{site_lang}"
         @flags << @config.dig('lang', site_lang, 'all')
@@ -299,6 +304,14 @@ module Jekyll
 
     def full?
       @extra[:full]
+    end
+
+    def full_collection?
+      @extra[:full_collection]
+    end
+
+    def categories?
+      @extra[:categories]
     end
 
     def pdf?

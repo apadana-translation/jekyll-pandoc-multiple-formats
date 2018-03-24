@@ -28,6 +28,19 @@ class PandocGenerator < Generator
 
   attr_accessor :site, :config
 
+  def doc_categories_hash()
+    hash = Hash.new { |h, key| h[key] = [] }
+
+    @site.collections.each do |name, collection|
+      collection.docs.each do |doc|
+        doc.data['categories'].each { |t| hash[t] << doc } if doc.data['categories']
+      end
+    end
+
+    hash.values.each { |posts| posts.sort!.reverse! }
+    hash
+  end
+
   def generate_post_for_output(post, output)
     Jekyll.logger.debug 'Pandoc:', post.data['title']
 
@@ -38,10 +51,18 @@ class PandocGenerator < Generator
     @pandoc_files << pandoc_file
   end
 
-  def generate_category_for_output(category, posts, output)
-    Jekyll.logger.info 'Pandoc:', "Generating category #{category}"
-    posts.sort!
-    pandoc_file = PandocFile.new(@site, output, posts, category)
+  def generate_category_for_output(category, docs, output)
+    # fetch corresponding category name from data file
+    categories_data = @site.data['categories']
+    category_title = categories_data.dig(category, 'name')
+
+    Jekyll.logger.info 'Pandoc:', "Generating category #{category_title}"
+
+    sorted_docs = docs.sort_by { | doc |
+      doc.data["order"] || 10000
+    }
+
+    pandoc_file = PandocFile.new(@site, output, sorted_docs, category_title)
 
     if @site.keep_files.include? pandoc_file.relative_path
       Jekyll.logger.warn 'Pandoc:',
@@ -55,20 +76,31 @@ class PandocGenerator < Generator
     @pandoc_files << pandoc_file
   end
 
-  def general_full_for_output(output)
+  def generate_full_for_output(output)
     title = @site.config.dig('title')
     Jekyll.logger.info 'Pandoc:', "Generating full file #{title}"
-    # For parts to make sense, we order articles by date and then by
-    # category, so each category is ordered by date.
-    #
-    # cat1 - art1
-    # cat1 - art3
-    # cat2 - art2
+    # We order collection by category, then by order.
     full = @site.posts.docs.reject { |p| p.data.dig('full') }.sort_by do |p|
       [ p.data['date'], p.data['categories'].first.to_s ]
     end
 
     full_file = PandocFile.new(@site, output, full, title, { full: true })
+    full_file.write
+    @site.keep_files << full_file.relative_path
+    @pandoc_files << full_file
+  end
+
+  def generate_full_collection_for_output(collection, output)
+    # output entire collections of poems
+    title = @site.config.dig('title')
+    Jekyll.logger.info 'Pandoc:', "Generating full collection file #{title}"
+
+    # sort by category (chapter), then frontmatter 'order' value
+    full = collection.docs.sort_by do |doc|
+      [ doc.data['categories'], doc.data['order'] ]
+    end
+
+    full_file = PandocFile.new(@site, output, full, title, { full_collection: true })
     full_file.write
     @site.keep_files << full_file.relative_path
     @pandoc_files << full_file
@@ -91,13 +123,32 @@ class PandocGenerator < Generator
         Jekyll::Hooks.trigger :posts, :post_render, post, { format: output }
       end
 
+      @site.collections.each do |name, collection|
+        collection.docs.each do |doc|
+          Jekyll::Hooks.trigger :documents, :pre_render, doc, { format: output }
+          generate_post_for_output(doc, output) if @config.generate_posts?
+          Jekyll::Hooks.trigger :documents, :post_render, doc, { format: output }
+        end
+      end
+
       if @config.generate_categories?
-        @site.post_attr_hash('categories').each_pair do |title, posts|
-          generate_category_for_output title, posts, output
+        def categories
+          if Jekyll::VERSION >= '3.0.0'
+            doc_categories_hash()
+          else
+            @site.post_attr_hash('categories')
+          end
+        end
+        categories.each_pair do |title, docs|
+          generate_category_for_output(title, docs, output)
         end
       end
 
       general_full_for_output(output) if @config.generate_full_file?
+
+      @site.collections.each do |name, collection|
+        generate_full_collection_for_output(collection, output) if @config.generate_full_collection_file?
+      end
     end
 
     @pandoc_files.each do |pandoc_file|
