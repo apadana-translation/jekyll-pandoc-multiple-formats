@@ -6,18 +6,18 @@ module JekyllPandocMultipleFormats
         'categories' => false,
         'full' => false
       },
-      'bundle_permalink'  => ':output_ext/:slug.:output_ext',
-      'papersize'         => 'a5paper',
-      'sheetsize'         => 'a4paper',
-      'imposition'        => true,
-      'binder'            => true,
-      'signature'         => 20,
-      'flags'             => '--smart',
-      'site_flags'        => '--toc',
-      'outputs'           => {},
-      'covers_dir'        => 'images/',
-      'title'             => nil,
-      'full_flags'        => '--top-level-division=part'
+      'bundle_permalink'      => ':output_ext/:slug.:output_ext',
+      'papersize'             => 'a5paper',
+      'sheetsize'             => 'a4paper',
+      'imposition'            => true,
+      'binder'                => true,
+      'signature'             => 20,
+      'flags'                 => '--smart',
+      'site_flags'            => '--toc',
+      'outputs'               => {},
+      'covers_dir'            => 'images/',
+      'title'                 => nil,
+      'full_flags'            => '--top-level-division=part'
     }
 
     attr_accessor :config
@@ -53,6 +53,10 @@ module JekyllPandocMultipleFormats
 
     def generate_full_file?
       !@config.dig('skip', 'full')
+    end
+
+    def generate_full_collection_file?
+      !@config.dig('skip', 'full_collection')
     end
   end
 end
