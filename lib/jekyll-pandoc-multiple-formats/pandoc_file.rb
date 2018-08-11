@@ -160,6 +160,9 @@ module Jekyll
           content = content.gsub(relative_re, '(\1)')
           # hide span tags containing diacritic substitutes
           content = content.gsub(span_nodiacritics, '')
+          # Prefix footnote references to prevent duplicates
+          # when Pandoc builds categories or full
+          content = content.gsub(/\[\^([^\]]+)\]/, "[^#{post.data['slug']}-\\1]")
 
           # if the file contains all the articles, we make each category
           # a different part by adding a first level title out of it
