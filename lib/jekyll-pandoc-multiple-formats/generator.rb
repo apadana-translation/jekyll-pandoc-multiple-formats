@@ -1,7 +1,7 @@
 # Copyright (c) 2012-2018 Nicolás Reynolds <fauno@endefensadelsl.org>
 #               2012-2013 Mauricio Pasquier Juan <mpj@endefensadelsl.org>
 #               2013      Brian Candler <b.candler@pobox.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
 # "Software"), to deal in the Software without restriction, including
@@ -9,10 +9,10 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -55,8 +55,7 @@ class PandocGenerator < Generator
     # fetch corresponding category name from data file
     categories_data = @site.data['categories']
     category_title = categories_data.dig(category, 'name')
-
-    Jekyll.logger.info 'Pandoc:', "Generating category #{category_title}"
+    Jekyll.logger.info "Pandoc:", "Generating category '#{category_title}'"
 
     sorted_docs = docs.sort_by { | doc |
       doc.data["order"] || 10000
@@ -71,7 +70,6 @@ class PandocGenerator < Generator
     end
 
     return unless pandoc_file.write
-
     @site.keep_files << pandoc_file.relative_path
     @pandoc_files << pandoc_file
   end
@@ -93,7 +91,7 @@ class PandocGenerator < Generator
   def generate_full_collection_for_output(collection, output)
     # output entire collections of poems
     title = @site.config.dig('title')
-    Jekyll.logger.info 'Pandoc:', "Generating full collection file #{title}"
+    Jekyll.logger.info 'Pandoc:', "Generating full collection '#{title}'"
 
     # sort by category (chapter), then frontmatter 'order' value
     full = collection.docs.sort_by do |doc|
@@ -116,7 +114,7 @@ class PandocGenerator < Generator
     @pandoc_files = []
 
     @config.outputs.each_pair do |output, _|
-      Jekyll.logger.info 'Pandoc:', "Generating #{output}"
+      Jekyll.logger.info 'Pandoc:', "Generating #{output} files"
       @site.posts.docs.each do |post|
         Jekyll::Hooks.trigger :posts, :pre_render, post, { format: output }
         generate_post_for_output(post, output) if @config.generate_posts?
@@ -146,7 +144,7 @@ class PandocGenerator < Generator
 
       general_full_for_output(output) if @config.generate_full_file?
 
-      @site.collections.each do |name, collection|
+      @site.collections.reject { |c| c['posts'] }.each do |name, collection|
         generate_full_collection_for_output(collection, output) if @config.generate_full_collection_file?
       end
     end

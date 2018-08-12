@@ -162,7 +162,7 @@ module Jekyll
           content = content.gsub(span_nodiacritics, '')
           # Prefix footnote references to prevent duplicates
           # when Pandoc builds categories or full
-          content = content.gsub(/\[\^([^\]]+)\]/, "[^#{post.data['slug']}-\\1]")
+          content = content.gsub(/\[\^([^\]]+)\]/, "[^#{post.data['categories'].first}_#{post.data['slug']}-\\1]")
 
           # if the file contains all the articles, we make each category
           # a different part by adding a first level title out of it
@@ -193,7 +193,7 @@ module Jekyll
 
     def write
       unless rebuild?
-        Jekyll.logger.info "#{relative_path} doesn't need to be rebuilt"
+        Jekyll.logger.info "Pandoc:", "'#{title}' doesn't need to be rebuilt"
         Jekyll.logger.debug sources.join(' ')
         return true
       end
@@ -376,7 +376,7 @@ module Jekyll
 
     def rebuild?
       !File.exist?(path) || sources.map do |f|
-        File.ctime(f) > File.ctime(path)
+        File.mtime(f) > File.mtime(path)
       end.any?
     end
 
